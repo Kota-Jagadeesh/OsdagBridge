@@ -72,6 +72,45 @@ from osdagbridge.core.utils.common import (
 
 from osdagbridge.core.reports.report_utils import _render_value, get_girder_entries, _tex
 
+
+def _formatted_number(input_dict, key, places=3):
+    """Print existing numeric values without binary floating-point artifacts."""
+    value = input_dict.get(key)
+    if value is None or value == "":
+        return ""
+    try:
+        number = float(value)
+        if not __import__("math").isfinite(number):
+            return _tex(value)
+        return _tex(f"{number:.{places}f}".rstrip("0").rstrip("."))
+    except (TypeError, ValueError):
+        return _tex(value)
+
+
+def _girder_dimension_mm(input_dict, key, kind):
+    """Format metre-based GUI dimensions as millimetres; accept mm inputs too.
+
+    GUI values seen in the supplied report include D=1.34 m, width=0.41 m,
+    thickness=0.008 m. Large values already in mm are left unchanged.
+    This converts report display only, never design computation inputs.
+    """
+    value = input_dict.get(key)
+    if value is None or value == "":
+        return ""
+    try:
+        number = float(value)
+        if not __import__("math").isfinite(number):
+            return _tex(value) + " mm"
+        # Thickness values below 1 are metres; flange widths below 10 and
+        # girder depths below 20 are metres in this input schema.
+        cutoff = {"depth": 20.0, "width": 10.0, "thickness": 1.0}[kind]
+        if 0 < abs(number) < cutoff:
+            number *= 1000
+        return _tex(f"{number:.2f}".rstrip("0").rstrip(".")) + " mm"
+    except (TypeError, ValueError):
+        return _tex(value) + " mm"
+
+
 def ch2_input_parameters(m, input_dict, output_dict=None):
     girder_entries = get_girder_entries(input_dict)
     n_girders = len(girder_entries)
@@ -172,7 +211,7 @@ Where the user has modified additional inputs, those values are reported here. W
 \hline
 \textbf{parameter} & \textbf{value} \\
 \hline
-\textnormal{Overall Bridge Width (m)} & """ + (_render_value(input_dict, KEY_TS_OVERALL_WIDTH)) + r""" \\[6pt]
+\textnormal{Overall Bridge Width (m)} & """ + (_formatted_number(input_dict, KEY_TS_OVERALL_WIDTH)) + r""" \\[6pt]
 \hline
 \textnormal{No. of Girders} & """ + (_render_value(input_dict, KEY_TS_NO_OF_GIRDERS)) + r""" \\[6pt]
 \hline
@@ -240,17 +279,17 @@ def _girder_tables(input_dict, n_girders):
     # Helper: one girder-dimension row
     def _dim_row(g_lbl, i):
         return (g_lbl + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_DEPTH}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_DEPTH}.G{i}.M1", "depth"))
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_WEB_THICKNESS}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_WEB_THICKNESS}.G{i}.M1", "thickness"))
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_WIDTH}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_WIDTH}.G{i}.M1", "width"))
                 + ', '
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_THICKNESS}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_TOP_FLANGE_THICKNESS}.G{i}.M1", "thickness"))
                 + r""" & """
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_WIDTH}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_WIDTH}.G{i}.M1", "width"))
                 + ', '
-                + (_render_value(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_THICKNESS}.G{i}.M1", ' mm'))
+                + (_girder_dimension_mm(input_dict, f"{KEY_MP_GIRDER_BOTTOM_FLANGE_THICKNESS}.G{i}.M1", "thickness"))
                 + r""" \\[8pt]
 \hline
 """)

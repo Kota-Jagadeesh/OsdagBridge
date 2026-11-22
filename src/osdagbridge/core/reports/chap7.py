@@ -1,4 +1,7 @@
-def ch7_quantities(input_dict):
+from osdagbridge.core.reports.charts import quantity_figures
+
+def ch7_quantities(input_dict, chart_dir=None):
+    chart_tex = quantity_figures(input_dict, chart_dir) if chart_dir else ""
     return r"""
 \chapter{Material Take-off \& Quantity Summary}
 \label{ch:material-takeoff}
@@ -28,6 +31,9 @@ def ch7_quantities(input_dict):
 6 & Crash Barrier & """ + str(input_dict.get("crash_barrier_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_qty", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_total", "N.A.")) + r""" \\
 \hline
 \end{longtable}
-"""
+\endgroup
+""" + (r"\noindent\small\textit{End-diaphragm steel quantity: not available "
+         r"from the current material take-off data.}\par\normalsize" if not input_dict.get('end_diaphragm_wt_total') else
+         r"\noindent\small End-diaphragm steel quantity (MT): " + str(input_dict['end_diaphragm_wt_total']) + r"\par\normalsize") + chart_tex
 
 

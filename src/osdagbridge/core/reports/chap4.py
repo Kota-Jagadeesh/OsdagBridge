@@ -49,38 +49,10 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
         for lc in all_lcs
     ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\[6pt]"
 
-    _span_m         = float(bridge.input_dict.get(KEY_SPAN, 0) or 0)
-    _allow_live_mm  = _span_m * 1000.0 / 800.0
-    _allow_total_mm = _span_m * 1000.0 / 600.0
-
-    # Find governing girder — worst (max) deflection across all girders
-    try:
-        n = int(bridge.input_dict.get(KEY_TS_NO_OF_GIRDERS, 1) or 1)
-    except (TypeError, ValueError):
-        n = 1
-
-    _live_mm  = None
-    _total_mm = None
-    for _gi in range(1, n + 1):
-        _l = bridge.output_dict.get(f"{KEY_SD_DEFL_LIVE}.G{_gi}")
-        _t = bridge.output_dict.get(f"{KEY_SD_DEFL_TOTAL}.G{_gi}")
-        if _l is not None:
-            _live_mm  = max(_live_mm, float(_l))  if _live_mm  is not None else float(_l)
-        if _t is not None:
-            _total_mm = max(_total_mm, float(_t)) if _total_mm is not None else float(_t)
-
-    _live_str        = f"{_live_mm:.3f} mm"  if _live_mm  is not None else "---"
-    _total_str       = f"{_total_mm:.3f} mm" if _total_mm is not None else "---"
-    _allow_live_str  = f"L/800 = {_allow_live_mm:.1f} mm"
-    _allow_total_str = f"L/600 = {_allow_total_mm:.1f} mm"
-    _live_status     = ("PASS" if _live_mm  <= _allow_live_mm  else r"\textcolor{red}{FAIL}") if _live_mm  is not None else "---"
-    _total_status    = ("PASS" if _total_mm <= _allow_total_mm else r"\textcolor{red}{FAIL}") if _total_mm is not None else "---"
-    return r"""
-\chapter{Analysis Results}
-
-A grillage model was used for structural analysis. The deck is idealized as a grid of elastic beam elements --- longitudinal members represent the composite steel girders with effective slab, and transverse members represent the slab or cross frames. This section summarizes the critical output from that analysis.
-
-\vspace{1em}
+    # Only render tables when analysis data was actually delivered by the backend.
+    # Empty tables were previously mistaken for valid engineering output.
+    if all_lcs:
+        demand_tex = r"""\vspace{1em}
 \begingroup
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -138,21 +110,70 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 
 \hline
 \end{longtable}
-\endgroup
+\endgroup"""
+    else:
+        demand_tex = (r"\noindent\textit{Maximum-demand table unavailable: "
+                      r"load-case analysis results were not supplied for this report.}\par")
 
-\vspace{1em}
-\begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
-\caption{\textbf{Reactions at Supports}}
+    reaction_rows = []
+    for lc, reaction in rxn_summary.items():
+        if not isinstance(reaction, dict):
+            continue
+        if reaction.get('left_kN') is None and reaction.get('right_kN') is None:
+            continue
+        reaction_rows.append(_tex(lc) + ' & ' + _fmt(reaction.get('left_kN'))
+                             + ' & ' + _fmt(reaction.get('right_kN'))
+                             + r' \\ \hline')
+    if reaction_rows:
+        reaction_tex = (r"""\vspace{1em}
+\begin{longtable}{|L{5.2cm}|C{5.2cm}|C{5.2cm}|}
+\caption{\textbf{Reactions at Supports}}\\
 \hline
-\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\[6pt]
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\ \hline
+\endfirsthead
 \hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
-\end{longtable}
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\ \hline
+\endhead
+""" + '\n'.join(reaction_rows) + r"""
+\end{longtable}""")
+    else:
+        reaction_tex = (r"\noindent\textit{Support-reaction table unavailable: "
+                        r"reaction results were not supplied for this report.}\par")
+
+    _span_m         = float(bridge.input_dict.get(KEY_SPAN, 0) or 0)
+    _allow_live_mm  = _span_m * 1000.0 / 800.0
+    _allow_total_mm = _span_m * 1000.0 / 600.0
+
+    # Find governing girder — worst (max) deflection across all girders
+    try:
+        n = int(bridge.input_dict.get(KEY_TS_NO_OF_GIRDERS, 1) or 1)
+    except (TypeError, ValueError):
+        n = 1
+
+    _live_mm  = None
+    _total_mm = None
+    for _gi in range(1, n + 1):
+        _l = bridge.output_dict.get(f"{KEY_SD_DEFL_LIVE}.G{_gi}")
+        _t = bridge.output_dict.get(f"{KEY_SD_DEFL_TOTAL}.G{_gi}")
+        if _l is not None:
+            _live_mm  = max(_live_mm, float(_l))  if _live_mm  is not None else float(_l)
+        if _t is not None:
+            _total_mm = max(_total_mm, float(_t)) if _total_mm is not None else float(_t)
+
+    _live_str        = f"{_live_mm:.3f} mm"  if _live_mm  is not None else "---"
+    _total_str       = f"{_total_mm:.3f} mm" if _total_mm is not None else "---"
+    _allow_live_str  = f"L/800 = {_allow_live_mm:.1f} mm"
+    _allow_total_str = f"L/600 = {_allow_total_mm:.1f} mm"
+    _live_status     = ("PASS" if _live_mm  <= _allow_live_mm  else r"\textcolor{red}{FAIL}") if _live_mm  is not None else "---"
+    _total_status    = ("PASS" if _total_mm <= _allow_total_mm else r"\textcolor{red}{FAIL}") if _total_mm is not None else "---"
+    return r"""
+\chapter{Analysis Results}
+
+A grillage model was used for structural analysis. The deck is idealized as a grid of elastic beam elements --- longitudinal members represent the composite steel girders with effective slab, and transverse members represent the slab or cross frames. This section summarizes the critical output from that analysis.
+
+""" + demand_tex + r"""
+
+""" + reaction_tex + r"""
 
 \vspace{1em}
 \begin{longtable}{|L{7cm}|p{8.5cm}|}

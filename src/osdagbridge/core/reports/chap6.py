@@ -23,7 +23,7 @@ def ch6_drawings(fig_paths):
 
     def _sec_fig(path, title, label=None):
         """Figure block: image first, numbered below. Placeholder if no path."""
-        label_tex = (r'\label{' + label + '}\n') if label else ''
+        label_tex = (r'\label{' + label + '}' + '\n') if label else ''
         if path:
             p = path.replace('\\', '/')
             return (r'\begin{figure}[H]' + '\n'
@@ -34,14 +34,9 @@ def ch6_drawings(fig_paths):
                     + label_tex
                     + r'\end{figure}' + '\n'
                     )
-        return (r'\begin{figure}[H]' + '\n'
-                r'\centering' + '\n'
-                r'\fbox{\parbox{0.97\textwidth}{' + '\n'
-                r'\textit{[ PLACEHOLDER: ' + ' ' + title + r' ]}' + '\n'
-                r'}}' + '\n'
-                r'\caption{' + title + '}\n'
-                + label_tex
-                + r'\end{figure}' + '\n')
+        # Don't reserve a figure number for an image that does not exist.
+        return (r'\par\noindent{\small\itshape ' + title
+                + r': CAD image not exported in this run.}\par\smallskip' + '\n')
 
     sup3d  = _sec_fig(fig_paths.get('final_geometry'),   'Overall 3D Bridge Superstructure',   'fig:bridge-3d')
     cs     = _sec_fig(fig_paths.get('cross_section'),     'Typical Cross Section',              'fig:cross-section')
@@ -58,12 +53,14 @@ def ch6_drawings(fig_paths):
             p = path.replace('\\', '/')
             body = r'\includegraphics[width=\linewidth]{' + p + '}'
         else:
-            body = r'\fbox{\parbox{0.95\linewidth}{\centering\textit{[ ' + title + r' ]}}}'
+            body = (r'\parbox{0.95\linewidth}{\centering\footnotesize\itshape '
+                    r'CAD view not available}')
         return (r'\begin{minipage}[t]{0.31\textwidth}' + '\n'
                 r'\centering' + '\n'
                 + body + '\n'
-                r'\captionof{figure}{' + title + '}\n'
-                + label_tex + '\n'
+                + (r'\captionof{figure}{' + title + '}\n' + label_tex + '\n' if path
+                   else r'\par\footnotesize ' + title + '\n')
+                +
                 r'\end{minipage}')
 
     # Cross Bracing section views (Figures 6.8, 6.9, 6.10) — 3 columns
@@ -126,7 +123,7 @@ def ch6_drawings(fig_paths):
 \chapter{Drawings and Visualizations}
 \label{ch:drawings}
 
-This section presents CAD-generated views of the designed bridge and its components. All views are generated automatically by OsdagBridge using pythonOCC.
+Available CAD-generated views are presented below. When an image was not exported by the application, its absence is stated explicitly rather than displaying a dummy drawing.
 
 \section{Bridge Configuration and Layout}
 \label{sec:bridge-layout}
@@ -150,7 +147,7 @@ This section presents CAD-generated views of the designed bridge and its compone
 """
             + cbdia + '\n\n'
             + cb_sections_row + r"""
-            
+
 
 \section{End Diaphragm Detail}
 \label{sec:diaphragm-detail}

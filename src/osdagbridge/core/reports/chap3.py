@@ -300,18 +300,42 @@ This section summarizes all loads applied to the bridge and the load combination
 \end{longtable}
 
 \vspace{1em}
+\begin{longtable}{|L{4.2cm}|C{2.7cm}|p{8.6cm}|}
+\caption{\textbf{Vehicle Live Loads (LL)}}\\
+\hline
+\textbf{Parameter} & \textbf{Unit} & \textbf{Value} \\[4pt]
+\hline
+\endfirsthead
+\caption[]{\textbf{Vehicle Live Loads (continued)}}\\
+\hline
+\textbf{Parameter} & \textbf{Unit} & \textbf{Value} \\[4pt]
+\hline
+\endhead
+\textnormal{Selected vehicle classes} & --- & """ + _tex(vehicles_str) + r""" \\[6pt]
+\hline
+\textnormal{Impact factor} & dimensionless & """ + _tex(impact_factor_str) + r""" \\[6pt]
+\hline
+\textnormal{Braking load (IRC 6)} & kN & """ + _tex(braking_force_str) + r""" \\[6pt]
+\hline
+\textnormal{Centrifugal force} & kN & Not available in report input data \\[6pt]
+\hline
+\end{longtable}
+
+\vspace{1em}
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Live Loads (LL)}}
+\caption{\textbf{Footway / Footpath Live Load}}\\
 \hline
-\textbf{parameter} & \textbf{value} \\
+\textbf{Parameter} & \textbf{Value} \\[4pt]
 \hline
-\textnormal{Vehicles Considered} & """ + _tex(vehicles_str) + r""" \\[6pt]
+\endfirsthead
+\caption[]{\textbf{Footway / Footpath Live Load (continued)}}\\
 \hline
-\textnormal{Impact Factor (IRC 6)} & """ + _tex(impact_factor_str) + r""" \\[6pt]
+\textbf{Parameter} & \textbf{Value} \\[4pt]
 \hline
-\textnormal{Braking Load (IRC 6)} & """ + _tex(braking_force_str) + r""" \\[6pt]
+\endhead
+\textnormal{Footpath load method} & """ + _tex(fp_mode or "Not specified") + r""" \\[6pt]
 \hline
-\textnormal{Footpath Live Load (if applicable)} & """ + (_render_value(input_dict, KEY_LL_FOOTPATH_PRESSURE_VALUE, ' kN/m\\textsuperscript{2}')) + r""" \\[6pt]
+\textnormal{Footway live load} & """ + _tex(fp_str) + r""" \\[6pt]
 \hline
 \end{longtable}
 
@@ -387,6 +411,12 @@ This section summarizes all loads applied to the bridge and the load combination
 \hline
 \textbf{Combination ID} & \textbf{Load Cases} \\[6pt]
 \hline
+\endfirsthead
+\caption[]{\textbf{Load Combinations (continued)}}\\
+\hline
+\textbf{Combination ID} & \textbf{Load Cases} \\[6pt]
+\hline
+\endhead
 """ + lc_rows_str + r"""
 \end{longtable}
 

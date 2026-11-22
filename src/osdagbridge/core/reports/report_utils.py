@@ -107,9 +107,10 @@ def _fig_embed(path, caption, width=r'\textwidth', height=None):
                 r'\caption*{\small ' + caption + '}\n'
                 r'\vspace{-0.5em}' + '\n'
                 r'\end{figure}')
-    # fbox placeholder — matches template exactly
-    return (r'\noindent\fbox{\parbox{0.97\textwidth}{' + '\n'
-            r'\textit{[ PLACEHOLDER: ' + caption + r' ]}' + '\n'
-            r'}}')
+    # Missing assets are a data-pipeline limitation, not an illustration.
+    # A short paragraph cannot overrun the text width or overlap another note.
+    label = caption.split(':', 1)[0]
+    return (r'\par\noindent{\small\itshape ' + label
+            + r' --- image not exported for this report run.}\par\smallskip' + '\n')
 
 

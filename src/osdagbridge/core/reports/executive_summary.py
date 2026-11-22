@@ -127,6 +127,25 @@ def executive_summary(input_dict, output_dict, fig_paths) -> str:
     else:
         overall_utilization_ratio = ""
 
+    # Summary labels must reflect the report's evaluated checks, never
+    # unconditional PASS text. A known failing UR overrides other labels.
+    def _result_line(label, ratio):
+        if ratio is None:
+            state = "Not available"
+        elif ratio > 1.0:
+            state = f"FAIL (maximum reported UR: {ratio:.2f})"
+        else:
+            state = f"Within UR limit (maximum reported UR: {ratio:.2f})"
+        return _tex(f"{label}: {state}")
+
+    summary_lines = [
+        _result_line("Girder design", girder_max_ur),
+        _result_line("Cross bracing design", _max_member_efficiency(cb_results)),
+        _result_line("End diaphragm design", _max_member_efficiency(ed_results)),
+        _result_line("Deck design", deck_max),
+    ]
+    summary_tex = (" " + chr(92) + chr(92) + "\n").join(summary_lines)
+
     gov = _tex(gov_name) if gov_name not in (None, '', 'None') else ''
     ur = _tex(overall_utilization_ratio) if overall_utilization_ratio else ''
 
@@ -230,10 +249,7 @@ This section provides a concise summary of the bridge design, key inputs, govern
 \addcontentsline{toc}{section}{Key Design Outcomes Summary}
 \label{sec:key-outcomes}
 
-\noindent Girder design pass \\
-Cross bracing design pass \\
-End Diaphragm design pass \\
-Deck design pass
+\noindent """ + summary_tex + r"""
 
 \section*{Design Assumptions and Limitations}
 \addcontentsline{toc}{section}{Design Assumptions and Limitations}
